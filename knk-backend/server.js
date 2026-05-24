@@ -19,7 +19,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://knk-panel.vercel.app"
+      "https://knk-partners.vercel.app"
     ],
     credentials: true,
   })
