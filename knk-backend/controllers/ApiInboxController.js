@@ -1,5 +1,6 @@
 const ApiRequest = require("../models/ApiRequest");
 const Case = require("../models/Case");
+const User = require("../models/User");
 
 
 // GET ALL API REQUESTS
@@ -36,7 +37,7 @@ const createApiRequest = async (req, res) => {
 };
 
 
-// PROCESS API REQUEST -> CREATE CASE
+// PROCESS API REQUEST -> CREATE REAL CASE
 const processApiRequest = async (req, res) => {
   try {
 
@@ -48,27 +49,91 @@ const processApiRequest = async (req, res) => {
       });
     }
 
+    // prevent duplicate processing
+    if (request.processed) {
+      return res.status(400).json({
+        message: "Already processed",
+      });
+    }
+
+    // find default admin user
+    const defaultUser = await User.findOne({
+      role: "admin",
+    });
+
+    if (!defaultUser) {
+      return res.status(404).json({
+        message: "No admin user found",
+      });
+    }
+
+    // use applicationId from API as real ref no
+    const comp_ref_no = request.applicationId;
+
+    // prevent duplicate case ref
+    const existingCase = await Case.findOne({
+      comp_ref_no,
+    });
+
+    if (existingCase) {
+      return res.status(400).json({
+        message: "Case already exists",
+      });
+    }
+
     // CREATE REAL CASE
     const newCase = await Case.create({
-      applicationId: request.applicationId,
-      candidateName: request.candidateName,
-      fatherName: request.fatherName,
-      dob: request.dob,
+      comp_ref_no,
+
+      user: defaultUser._id,
+
+      check_status: "NEW",
+
+      callback_url: "",
+
+      candidate_name: request.candidateName,
+      father_name: request.fatherName,
+      candidate_dob: request.dob,
       city: request.city,
       state: request.state,
       vendor: request.vendor,
+      tat: request.tat,
       remark: request.remark,
-      status: "NEW",
-      source: "CLIENT_API",
+      attachment: request.attachment,
     });
 
-    // MARK AS PROCESSED
+    // mark request processed
     request.processed = true;
     await request.save();
 
     res.json({
+      success: true,
       message: "Case created successfully",
       case: newCase,
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+// RECENT API ACTIVITY
+const getRecentApiActivity = async (
+  req,
+  res
+) => {
+  try {
+
+    const logs =
+      await ApiRequest.find()
+      .sort({ createdAt: -1 })
+      .limit(5);
+
+    res.status(200).json({
+      success: true,
+      data: logs,
     });
 
   } catch (error) {
@@ -83,4 +148,5 @@ module.exports = {
   getApiRequests,
   createApiRequest,
   processApiRequest,
+  getRecentApiActivity,
 };

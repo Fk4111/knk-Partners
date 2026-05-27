@@ -15,6 +15,10 @@ const apiRequestSchema = new mongoose.Schema(
     state: String,
     vendor: String,
     remark: String,
+    tat: {
+        type: Number,
+        default: 5,
+      },
     attachment: String,
 
     extStatus: {

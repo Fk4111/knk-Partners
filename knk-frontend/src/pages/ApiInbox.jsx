@@ -33,6 +33,31 @@ export default function ApiInbox() {
   c.candidateName?.toLowerCase().includes(search.toLowerCase())
 );
 
+const handleProcess = async (id) => {
+  try {
+
+    const res = await API.post(
+      `/api-inbox/process/${id}`
+    );
+
+    alert(res.data.message);
+
+    // refresh inbox
+    fetchInbox();
+
+    // optional redirect to cases page
+    navigate(`/cases/${res.data.case._id}`);
+
+  } catch (err) {
+    console.error(err);
+
+    alert(
+      err?.response?.data?.message ||
+      "Processing failed"
+    );
+  }
+};
+
   return (
     <DashboardLayout title="API Requests Inbox" breadcrumbs={["Home", "API Inbox"]}>
       <div className="space-y-4">
@@ -159,11 +184,11 @@ export default function ApiInbox() {
                       </button> */}
 
                       <button
-                        onClick={() => alert("Processing API request feature coming next")}
-                        className="flex items-center gap-1.5 bg-blue-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
-                      >
-                        → Process
-                      </button>
+                      onClick={() => handleProcess(c._id)}
+                      className="flex items-center gap-1.5 bg-blue-600 text-white text-xs font-medium px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
+                    >
+                      → Process
+                    </button>
                     </td>
 
                   </tr>

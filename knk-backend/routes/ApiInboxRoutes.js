@@ -4,6 +4,7 @@ const {
   getApiRequests,
   createApiRequest,
   processApiRequest,
+  getRecentApiActivity,
 } = require("../controllers/ApiInboxController");
 
 const router = express.Router();
@@ -13,12 +14,16 @@ const router = express.Router();
 router.get("/", getApiRequests);
 
 
+// RECENT API ACTIVITY
+router.get("/activity", getRecentApiActivity);
+
 // CREATE REQUEST
 router.post("/", createApiRequest);
 
 
 // PROCESS REQUEST
 router.post("/process/:id", processApiRequest);
+
 
 
 module.exports = router;

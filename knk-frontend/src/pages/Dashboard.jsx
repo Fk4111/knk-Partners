@@ -99,6 +99,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [statusCounts, setStatusCounts] = useState({});
   const [apiInboxCount, setApiInboxCount] = useState(0);
+  const [apiActivity, setApiActivity] = useState([]);
 
 
   const fetchInboxCount = async () => {
@@ -121,13 +122,19 @@ export default function Dashboard() {
   const fetchAll = async () => {
     try {
 
-      const [statsRes, casesRes] = await Promise.all([
-        API.get("/cases/stats"),
-        API.get("/cases?limit=5"),
-      ]);
+      const [
+            statsRes,
+            casesRes,
+            activityRes
+          ] = await Promise.all([
+            API.get("/cases/stats"),
+            API.get("/cases?limit=5"),
+            API.get("/api-inbox/activity"),
+          ]);
 
       setStats(statsRes.data.data);
       setRecentCases(casesRes.data.data || []);
+      setApiActivity(activityRes.data.data || []);
 
       const counts = {};
 
@@ -239,11 +246,24 @@ const notificationCount =
           />
 
           <StatCard
-          label="OVERDUE"
-          value={0}
-          icon={MdWarning}
-          iconBg="bg-red-50 text-red-500"
-          />
+            label="OVERDUE"
+            value={
+            recentCases.filter(c => {
+              const tatLeft =
+                getTATLeft(
+                  c.createdAt,
+                  c.tat
+                );
+
+              return (
+                tatLeft !== null &&
+                tatLeft < 0
+              );
+            }).length
+            }
+            icon={MdWarning}
+            iconBg="bg-red-50 text-red-500"
+            />
 
           </div>
 
@@ -385,8 +405,90 @@ const notificationCount =
             )}
           </div>
         </div>
+        
+        {/* Recent API Activity */}
+        {isAdmin && (
+      <div className="bg-white rounded-xl border border-slate-100 overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <MdSyncAlt className="text-blue-600 text-xl" />
+            <h2 className="font-bold text-slate-900">
+              Recent API Activity
+            </h2>
+          </div>
+        </div>
 
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="bg-slate-50 text-left">
+                {[
+                  "App ID",
+                  "Candidate",
+                  "Status",
+                  "Source",
+                  "Time"
+                ].map(h => (
+                  <th
+                    key={h}
+                    className="px-4 py-3 text-xs font-semibold text-slate-500 uppercase"
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+
+            <tbody className="divide-y divide-slate-50">
+              {apiActivity.map(item => (
+                <tr
+                  key={item._id}
+                  className="hover:bg-slate-50"
+                >
+                  <td className="px-4 py-3 text-xs font-mono">
+                    {item.applicationId}
+                  </td>
+
+                  <td className="px-4 py-3 text-sm">
+                    {item.candidateName}
+                  </td>
+
+                  <td className="px-4 py-3">
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      item.processed
+                        ? "bg-green-100 text-green-700"
+                        : "bg-yellow-100 text-yellow-700"
+                    }`}>
+                      {item.processed
+                        ? "Processed"
+                        : "Pending"}
+                    </span>
+                  </td>
+
+                  <td className="px-4 py-3 text-sm text-slate-500">
+                    {item.source}
+                  </td>
+
+                  <td className="px-4 py-3 text-xs text-slate-400">
+                    {new Date(
+                      item.createdAt
+                    ).toLocaleDateString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {apiActivity.length === 0 && (
+            <div className="py-10 text-center text-slate-400">
+              No API activity found
+            </div>
+          )}
+        </div>
       </div>
+      )}
+      </div>
+      
     </DashboardLayout>
   );
 }

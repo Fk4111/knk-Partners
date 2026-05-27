@@ -19,6 +19,7 @@ const {
   updateCaseStatus,
   assignCase,
   getDashboardStats,
+  raiseInsufficientQuery,
 } = require("../controllers/caseController");
 
 
@@ -81,6 +82,12 @@ router.patch(
   assignCase
 );
 
+// RAISE QUERY
+router.patch(
+  "/cases/:id/query",
+  protect,
+  raiseInsufficientQuery
+);
 
 // TEST ROUTE
 router.get("/test", (req, res) => {

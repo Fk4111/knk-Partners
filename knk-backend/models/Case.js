@@ -7,7 +7,10 @@ const caseSchema = new mongoose.Schema(
       required: [true, "Complaint reference number is required"],
       unique: true,
       trim: true,
-      match: [/^REF-\d+$/, "Invalid format. Use REF-001"]
+      match: [
+      /^REF-[A-Za-z0-9-]+$/,
+      "Invalid format. Use REF-001 or REF-2026-001111"
+    ]
     },
 
     candidate_name: String,
@@ -18,10 +21,18 @@ const caseSchema = new mongoose.Schema(
     state: String,
     pincode: String,
     vendor: String,
-    tat: String,
+    tat: {
+      type: Number,
+      default: 5,
+    },
     attachment: String,
     remark: String,
     callback_url: String,
+
+      insufficient_query: {
+        type: String,
+        default: "",
+      },
 
     check_status: {
       type: String,

@@ -383,9 +383,48 @@ export default function CaseDetails() {
               <textarea value={queryText} onChange={e => setQueryText(e.target.value)} rows={4}
                 placeholder="Describe missing information or query for the client..."
                 className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none mb-3" />
-              <button className="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-2.5 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors">
-                <MdWarning className="text-base" /> Raise Query to Client
-              </button>
+              <button
+              onClick={async () => {
+                try {
+
+                  if (!queryText.trim()) {
+                    return alert("Enter query first");
+                  }
+
+                  await API.patch(
+                    `/cases/${id}/query`,
+                    {
+                      query: queryText,
+                    }
+                  );
+
+                  alert(
+                    "Query raised successfully"
+                  );
+
+                  setCaseData(prev => ({
+                  ...prev,
+                  check_status: "INSUFFICIENT",
+                  insufficient_query: queryText,
+                }));
+                window.location.reload();
+
+                  setQueryText("");
+
+                } catch (error) {
+                  console.log(error);
+
+                  alert(
+                    error?.response?.data?.message ||
+                    "Failed to raise query"
+                  );
+                }
+              }}
+              className="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-2.5 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors"
+            >
+              <MdWarning className="text-base" />
+              Raise Query to Client
+            </button>
             </div>
             )}
 

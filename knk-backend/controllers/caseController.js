@@ -36,8 +36,8 @@ exports.getAllCases = async (req, res, next) => {
     let filter = {};
 
     // If user is NOT admin → only own cases
-    if (req.user.role !== "admin") {
-      filter.user = req.user._id;
+        if (req.user.role !== "admin") {
+      filter.assignedTo = req.user._id;
     }
 
     if (req.query.status) {
@@ -394,4 +394,42 @@ exports.updateCaseStatus = async (req, res, next) => {
 
   }
 
+};
+
+// RAISE INSUFFICIENT QUERY
+exports.raiseInsufficientQuery =
+async (req, res, next) => {
+
+  try {
+
+    const caseData =
+      await Case.findById(
+        req.params.id
+      );
+
+    if (!caseData) {
+      return res.status(404).json({
+        success: false,
+        message: "Case not found",
+      });
+    }
+
+    caseData.insufficient_query =
+      req.body.query;
+
+    caseData.check_status =
+      "INSUFFICIENT";
+
+    await caseData.save();
+
+    res.status(200).json({
+      success: true,
+      message:
+        "Query raised successfully",
+      data: caseData,
+    });
+
+  } catch (error) {
+    next(error);
+  }
 };
