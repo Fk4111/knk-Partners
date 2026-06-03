@@ -1,7 +1,7 @@
 const ApiRequest = require("../models/ApiRequest");
 const Case = require("../models/Case");
 const User = require("../models/User");
-const createApiLog = require("../utils/apiLogger");
+const createApiLog = require("../utils/ApiLogger");
 
 
 // GET ALL API REQUESTS
