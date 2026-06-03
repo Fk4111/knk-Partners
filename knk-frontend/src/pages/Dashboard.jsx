@@ -18,60 +18,89 @@ const STATUS_CARDS = [
     countKey: "newCases",
     color: "bg-blue-50 text-blue-700 border-blue-100"
   },
+
   {
     key: "IN_PROGRESS",
     label: "In Progress",
     countKey: "inProgressCases",
     color: "bg-indigo-50 text-indigo-700 border-indigo-100"
   },
+
   {
     key: "Q_CHECK",
     label: "Q-Check",
     countKey: "qCheckCases",
     color: "bg-purple-50 text-purple-700 border-purple-100"
   },
+
   {
     key: "DONE",
     label: "Done",
     countKey: "doneCases",
     color: "bg-green-50 text-green-700 border-green-100"
   },
+
   {
     key: "INSUFFICIENT",
     label: "Insufficient",
     countKey: "insufficientCases",
     color: "bg-orange-50 text-orange-700 border-orange-100"
   },
+
   {
     key: "ON_HOLD",
     label: "On Hold",
     countKey: "onHoldCases",
     color: "bg-yellow-50 text-yellow-700 border-yellow-100"
   },
+
   {
     key: "STOPPED",
     label: "Stopped",
     countKey: "stoppedCases",
     color: "bg-slate-50 text-slate-600 border-slate-100"
   },
+
   {
     key: "REJECTED",
     label: "Rejected",
     countKey: "rejectedCases",
     color: "bg-red-50 text-red-700 border-red-100"
-  },
+  }
 ];
 
 
 
-function StatCard({ label, value, icon: Icon, iconBg, trend }) {
+
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+  iconBg,
+  trend,
+  onClick
+}) {
   return (
-    <div className="bg-white rounded-xl border border-slate-100 p-5 flex items-center justify-between hover:shadow-md transition-shadow">
+    <div
+      onClick={onClick}
+      className="bg-white rounded-xl border border-slate-100 p-5 flex items-center justify-between hover:shadow-md transition-shadow cursor-pointer"
+    >
       <div>
-        <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{label}</p>
-        <p className="text-3xl font-bold text-slate-900 mt-1">{value}</p>
-        {trend && <p className="text-xs text-slate-400 mt-1">{trend}</p>}
+        <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+          {label}
+        </p>
+
+        <p className="text-3xl font-bold text-slate-900 mt-1">
+          {value}
+        </p>
+
+        {trend && (
+          <p className="text-xs text-slate-400 mt-1">
+            {trend}
+          </p>
+        )}
       </div>
+
       <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${iconBg}`}>
         <Icon className="text-2xl" />
       </div>
@@ -97,7 +126,6 @@ export default function Dashboard() {
   const [stats, setStats] = useState(null);
   const [recentCases, setRecentCases] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [statusCounts, setStatusCounts] = useState({});
   const [apiInboxCount, setApiInboxCount] = useState(0);
   const [apiActivity, setApiActivity] = useState([]);
 
@@ -127,7 +155,7 @@ export default function Dashboard() {
             casesRes,
             activityRes
           ] = await Promise.all([
-            API.get("/cases/stats"),
+            API.get("/reports/summary"),
             API.get("/cases?limit=5"),
             API.get("/api-inbox/activity"),
           ]);
@@ -136,14 +164,6 @@ export default function Dashboard() {
       setRecentCases(casesRes.data.data || []);
       setApiActivity(activityRes.data.data || []);
 
-      const counts = {};
-
-      (casesRes.data.data || []).forEach(c => {
-        counts[c.check_status] =
-          (counts[c.check_status] || 0) + 1;
-      });
-
-      setStatusCounts(counts);
 
     } catch (err) {
       console.error(err);
@@ -169,31 +189,6 @@ const notificationCount =
     new Date().toDateString()
 ).length;
 
-  useEffect(() => {
-    const fetchAll = async () => {
-      try {
-        const [statsRes, casesRes] = await Promise.all([
-          API.get("/cases/stats"),
-          API.get("/cases?limit=5"),
-        ]);
-        setStats(statsRes.data.data);
-        setRecentCases(casesRes.data.data || []);
-
-        // Count by status from recent cases (dashboard approx)
-        const counts = {};
-        (casesRes.data.data || []).forEach(c => {
-          counts[c.check_status] = (counts[c.check_status] || 0) + 1;
-        });
-        setStatusCounts(counts);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAll();
-  }, []);
-
   if (loading) return (
     <DashboardLayout title="Dashboard" breadcrumbs={["Home", "Dashboard"]}>
       <LoadingSpinner text="Loading dashboard..." />
@@ -206,66 +201,78 @@ const notificationCount =
         breadcrumbs={["Home", "Dashboard"]}
         notificationCount={
           user?.role === "admin"
-            ? stats?.pendingCases || 0
+            ? apiInboxCount
             : 0
         }
         apiInboxCount={apiInboxCount}
       >
       <div className="space-y-6">
 
-        {/* Stat Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+       {/* Stat Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
 
-          <StatCard
+        <StatCard
           label={isAdmin ? "TOTAL CASES" : "MY ASSIGNED CASES"}
           value={
-          isAdmin
-          ? stats?.totalCases ?? 0
-          : recentCases.length
+            isAdmin
+              ? stats?.totalCases ?? 0
+              : recentCases.length
           }
           icon={MdFolder}
           iconBg="bg-blue-50 text-blue-500"
-          />
+          onClick={() => navigate("/cases")}
+        />
 
-          <StatCard
+        <StatCard
           label={isAdmin ? "NEW / UNASSIGNED" : "COMPLETED TODAY"}
           value={
-          isAdmin
-          ? stats?.newCases ?? 0
-          : completedToday
+            isAdmin
+              ? stats?.newCases ?? 0
+              : completedToday
           }
           icon={MdInbox}
           iconBg="bg-slate-100 text-slate-500"
-          />
+          onClick={() => navigate("/cases?status=NEW")}
+        />
 
-          <StatCard
+        <StatCard
           label="IN PROGRESS"
           value={stats?.inProgressCases ?? 0}
           icon={MdSync}
           iconBg="bg-indigo-50 text-indigo-500"
-          />
+          onClick={() => navigate("/cases?status=IN_PROGRESS")}
+        />
 
-          <StatCard
-            label="OVERDUE"
-            value={
-            recentCases.filter(c => {
-              const tatLeft =
-                getTATLeft(
-                  c.createdAt,
-                  c.tat
-                );
+        <StatCard
+          label="OVERDUE"
+          value={
+            recentCases.filter((c) => {
+              if (!c.tat) return false;
+
+              const tatLeft = getTATLeft(
+                c.createdAt,
+                c.tat
+              );
 
               return (
                 tatLeft !== null &&
-                tatLeft < 0
+                tatLeft < 0 &&
+                ![
+                  "DONE",
+                  "REJECTED",
+                  "STOPPED",
+                ].includes(
+                  c.check_status?.toUpperCase()
+                )
               );
             }).length
-            }
-            icon={MdWarning}
-            iconBg="bg-red-50 text-red-500"
-            />
+          }
+          icon={MdWarning}
+          iconBg="bg-red-50 text-red-500"
+          onClick={() => navigate("/cases?overdue=true")}
+        />
 
-          </div>
+      </div>
 
         {/* Cases by Status + Employee Workload */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -279,7 +286,21 @@ const notificationCount =
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {STATUS_CARDS.map(s => (
                 <div key={s.key}
-                  onClick={() => navigate(`/cases?status=${s.key}`)}
+                  onClick={() => {
+
+                    if (s.key === "OVERDUE") {
+                      navigate("/cases?overdue=true");
+                    }
+
+                    else if (s.key === "PENDING") {
+                      navigate("/cases?pending=true");
+                    }
+
+                    else {
+                      navigate(`/cases?status=${s.key}`);
+                    }
+
+                  }}
                   className={`border rounded-xl p-4 cursor-pointer hover:shadow-sm transition-all ${s.color}`}>
                   <div className="text-2xl font-bold">
                     {stats?.[s.countKey] ?? 0}

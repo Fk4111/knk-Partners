@@ -69,7 +69,7 @@ function Topbar({
 
         {/* Bell */}
         <button
- onClick={() => navigate("/cases?status=PENDING")}
+ onClick={() => navigate("/cases?status=NEW") }
  className="
  relative
  w-8 h-8

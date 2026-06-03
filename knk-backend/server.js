@@ -1,12 +1,17 @@
 require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
-const caseRoutes = require("./routes/caseRoutes");
-const errorHandler = require("./middlewares/errorHandler");
-const authRoutes = require("./routes/authRoutes");
-const ApiInboxRoutes = require("./routes/ApiInboxRoutes");
 
 const connectDB = require("./config/db");
+const errorHandler = require("./middlewares/errorHandler");
+
+const caseRoutes = require("./routes/caseRoutes");
+const authRoutes = require("./routes/authRoutes");
+const ApiInboxRoutes = require("./routes/ApiInboxRoutes");
+const ApiLogRoutes = require("./routes/ApiLogRoutes");
+const auditLogRoutes = require("./routes/auditLogRoutes");
+const reportRoutes = require("./routes/reportRoutes");
 
 const app = express();
 
@@ -20,22 +25,34 @@ app.use(
     origin: [
       "http://localhost:5173",
       "https://knk-partners.vercel.app",
+      "https://www.knkpartner.com",
       "https://knk-partners-aldhtmjqn-khanfaiyaz359-8312s-projects.vercel.app",
     ],
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    methods: [
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "OPTIONS",
+    ],
     credentials: true,
   })
 );
 
 app.use(express.json());
 
+/* Routes */
+
 app.use("/api/v1", caseRoutes);
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/api-inbox", ApiInboxRoutes);
+app.use("/api/v1/api-logs", ApiLogRoutes);
+app.use("/api/v1/audit-logs", auditLogRoutes);
+app.use("/api/v1/reports", reportRoutes);
 
 /* Error Handling Middleware */
 app.use(errorHandler);
-
 
 /* Test Route */
 app.get("/", (req, res) => {
@@ -43,8 +60,12 @@ app.get("/", (req, res) => {
 });
 
 /* Start Server */
+
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log("Server running on port", PORT);
+  console.log(
+    "Server running on port",
+    PORT
+  );
 });

@@ -24,6 +24,9 @@ export default function Cases() {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
+  const overdueFilter =
+    searchParams.get("overdue");
+
   const [status, setStatus] = useState(
     searchParams.get("status") || ""
   );
@@ -45,10 +48,11 @@ export default function Cases() {
 
 
   const fetchCases = useCallback(
-    async (
+   async (
       pg = page,
       s = debouncedSearch,
-      st = status
+      st = status,
+      overdue = overdueFilter
     ) => {
 
       setLoading(true);
@@ -61,8 +65,11 @@ export default function Cases() {
         if (s)
           url += `&search=${encodeURIComponent(s)}`;
 
-        if (st)
-          url += `&status=${st}`;
+          if (overdue === "true") {
+            url += "&overdue=true";
+          } else if (st) {
+            url += `&status=${encodeURIComponent(st)}`;
+          }
 
         const res = await API.get(url);
 
@@ -85,40 +92,47 @@ export default function Cases() {
       }
 
     },
-    [page, debouncedSearch, status]
+    [page, debouncedSearch, status, overdueFilter]
   );
 
 
-  // fetch whenever search/page/sidebar status changes
-  useEffect(() => {
+ // fetch whenever page/search/url filter changes
+useEffect(() => {
 
-    const urlStatus =
-      searchParams.get("status") || "";
+  const urlStatus =
+    searchParams.get("status") || "";
 
-    setStatus(urlStatus);
+  const overdue =
+    searchParams.get("overdue");
 
-    fetchCases(
-      page,
-      debouncedSearch,
-      urlStatus
-    );
+  setStatus(urlStatus);
 
-  }, [
+  fetchCases(
     page,
     debouncedSearch,
-    searchParams
-  ]);
+    urlStatus,
+    overdue
+  );
+
+}, [
+  page,
+  debouncedSearch,
+  searchParams,
+  fetchCases
+]);
 
 
-  const handleClear = () => {
+ const handleClear = () => {
 
-    setSearch("");
+  setSearch("");
+  setStatus("");
+  setPage(1);
 
-    setPage(1);
+  navigate("/cases", {
+    replace: true
+  });
 
-    navigate("/cases");
-
-  };
+};
 
 
   return (

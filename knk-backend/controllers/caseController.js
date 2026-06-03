@@ -1,4 +1,5 @@
 const Case = require("../models/Case");
+const createAuditLog = require("../utils/auditLogger");
 
 // POST - create case
 exports.createCase = async (req, res, next) => {
@@ -20,74 +21,169 @@ exports.createCase = async (req, res, next) => {
   }
 };
 
-
-// GET - all cases with pagination, filtering, search, and Sorting
+// GET - all cases with pagination, filtering, search and sorting
 
 exports.getAllCases = async (req, res, next) => {
 
   console.log(req.user);
+
   try {
+
     // Pagination
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 5;
-    const skip = (page - 1) * limit;
+    const page =
+      parseInt(req.query.page) || 1;
+
+    const limit =
+      parseInt(req.query.limit) || 5;
+
+    const skip =
+      (page - 1) * limit;
 
     // Filters
     let filter = {};
 
-    // If user is NOT admin → only own cases
-        if (req.user.role !== "admin") {
-      filter.assignedTo = req.user._id;
+    // Agent → only assigned cases
+    if (
+      req.user.role !== "admin"
+    ) {
+      filter.assignedTo =
+        req.user._id;
     }
 
+    // Status filter
     if (req.query.status) {
-      filter.check_status = req.query.status;
+      filter.check_status =
+        req.query.status;
     }
 
+    // Pending filter
+    if (req.query.pending) {
+
+      filter.check_status = {
+        $nin: [
+          "DONE",
+          "REJECTED",
+          "STOPPED"
+        ]
+      };
+
+    }
+
+    // Search filter
     if (req.query.search) {
+
       filter.$or = [
+
         {
           comp_ref_no: {
-            $regex: req.query.search,
+            $regex:
+              req.query.search,
             $options: "i",
           }
         },
+
         {
           candidate_name: {
-            $regex: req.query.search,
+            $regex:
+              req.query.search,
             $options: "i",
           }
         }
+
       ];
     }
+    // Overdue filter
+if (req.query.overdue === "true") {
 
-    // Sorting & How Sorting will work:-
-      // sort=createdAt   → ascending (old → new)
-     //  sort=-createdAt  → descending (new → old)
-     
-    let sortBy = "-createdAt"; // default (latest first)
+  const baseCases =
+    await Case.find(filter);
+
+  const overdueIds =
+    baseCases
+      .filter((c) => {
+
+        if (!c.tat)
+          return false;
+
+        const status =
+          (c.check_status || "")
+            .toUpperCase();
+
+        // ignore closed cases only
+        if (
+          [
+            "DONE",
+            "REJECTED",
+            "STOPPED"
+          ].includes(status)
+        ) {
+          return false;
+        }
+
+        const tatEnd =
+          new Date(
+            c.createdAt
+          ).getTime() +
+          (
+            parseInt(c.tat) *
+            24 *
+            60 *
+            60 *
+            1000
+          );
+
+        return (
+          Date.now() >
+          tatEnd
+        );
+
+      })
+      .map(c => c._id);
+
+  filter._id = {
+    $in: overdueIds
+  };
+}
+
+    // Sorting
+    let sortBy =
+      "-createdAt";
 
     if (req.query.sort) {
-      sortBy = req.query.sort;
+      sortBy =
+        req.query.sort;
     }
 
     // Total count
-    const total = await Case.countDocuments(filter);
+    const total =
+      await Case.countDocuments(
+        filter
+      );
 
     // Fetch data
-    const cases = await Case.find(filter)
-    .populate("user", "email role")
-    .populate("assignedTo", "email role")
-    .sort(sortBy)
-    .skip(skip)
-    .limit(limit);
+    const cases =
+      await Case.find(filter)
+        .populate(
+          "user",
+          "email role"
+        )
+        .populate(
+          "assignedTo",
+          "email role"
+        )
+        .sort(sortBy)
+        .skip(skip)
+        .limit(limit);
 
     res.status(200).json({
       success: true,
       page,
       limit,
       total,
-      totalPages: Math.ceil(total / limit),
+      totalPages:
+        Math.ceil(
+          total / limit
+        ),
       sort: sortBy,
       data: cases,
     });
@@ -96,45 +192,6 @@ exports.getAllCases = async (req, res, next) => {
     next(error);
   }
 };
-
-// GET - case by ID
-exports.getCaseById = async (req, res, next) => {
-
-  try {
-
-    console.log("PARAM ID:", req.params.id);
-
-    const singleCase = await Case.findOne({
-      _id: req.params.id
-    });
-
-    console.log("CASE FOUND:", singleCase);
-
-    if (!singleCase) {
-
-      const error = new Error("Case not found");
-
-      error.statusCode = 404;
-
-      return next(error);
-
-    }
-
-    res.status(200).json({
-      success: true,
-      data: singleCase,
-    });
-
-  } catch (error) {
-
-    console.log(error);
-
-    next(error);
-
-  }
-
-};
-
 
 
 
@@ -203,7 +260,10 @@ exports.deleteCase = async (req, res, next) => {
 
 // Assign case
 exports.assignCase = async (req, res, next) => {
+
+  
   try {
+    console.log("ASSIGN CASE HIT");
     const { assignedTo } = req.body;
 
     if (!assignedTo) {
@@ -217,6 +277,15 @@ exports.assignCase = async (req, res, next) => {
       { assignedTo },
       { new: true }
     ).populate("assignedTo", "email role");
+     
+    // Audit log 
+    await createAuditLog({
+      userId: req.user.id,
+      action: "CASE_ASSIGNED",
+      caseId: updatedCase._id,
+      details: `Assigned to ${assignedTo}`,
+      module: "CASE",
+    });
 
     if (!updatedCase) {
       const error = new Error("Case not found");
@@ -235,95 +304,149 @@ exports.assignCase = async (req, res, next) => {
   }
 };
 
+
 // DASHBOARD STATS
-exports.getDashboardStats = async (req,res,next)=>{
- try{
+// DASHBOARD STATS
+exports.getDashboardStats = async (req, res, next) => {
+  try {
 
-   let filter = {};
+    let filter = {};
 
-   // Agent → only assigned cases
-   if(req.user.role !== "admin"){
+    // Agent → only assigned cases
+    if (req.user.role !== "admin") {
       filter.assignedTo = req.user._id;
-   }
+    }
 
-   const totalCases =
+    // Fetch all visible cases
+    const allCases =
+      await Case.find(filter);
+
+    // OVERDUE CALCULATION
+    const overdueCases =
+      allCases.filter((c) => {
+
+        // must have TAT
+        if (!c.tat)
+          return false;
+
+        const status =
+          (c.check_status || "")
+            .toUpperCase();
+
+        // ignore final/closed cases
+        if (
+          [
+            "DONE",
+            "REJECTED",
+            "STOPPED",
+            "INSUFFICIENT"
+          ].includes(status)
+        ) {
+          return false;
+        }
+
+        const deadline =
+          new Date(c.createdAt);
+
+        deadline.setDate(
+          deadline.getDate() +
+          Number(c.tat)
+        );
+
+        return (
+          deadline <
+          new Date()
+        );
+
+      }).length;
+
+    const totalCases =
       await Case.countDocuments(filter);
 
-   const newCases =
+    // Bell icon / NEW cases
+    const newCases =
       await Case.countDocuments({
-      ...filter,
-      check_status:"NEW"
-   });
+        ...filter,
+        check_status: "NEW"
+      });
 
-    // for Bell icon
-   const pendingCases =
-   await Case.countDocuments({
-      check_status:"PENDING"
-   });
-
-   const inProgressCases =
+    // Active / unfinished cases
+    const pendingCases =
       await Case.countDocuments({
-      ...filter,
-      check_status:"IN_PROGRESS"
-   });
+        ...filter,
+        check_status: {
+          $nin: [
+            "DONE",
+            "REJECTED",
+            "STOPPED",
+            "INSUFFICIENT"
+          ]
+        }
+      });
 
-   const qCheckCases =
+    const inProgressCases =
       await Case.countDocuments({
-      ...filter,
-      check_status:"Q_CHECK"
-   });
+        ...filter,
+        check_status: "IN_PROGRESS"
+      });
 
-   const doneCases =
+    const qCheckCases =
       await Case.countDocuments({
-      ...filter,
-      check_status:"DONE"
-   });
+        ...filter,
+        check_status: "Q_CHECK"
+      });
 
-   const insufficientCases =
+    const doneCases =
       await Case.countDocuments({
-      ...filter,
-      check_status:"INSUFFICIENT"
-   });
+        ...filter,
+        check_status: "DONE"
+      });
 
-   const onHoldCases =
+    const insufficientCases =
       await Case.countDocuments({
-      ...filter,
-      check_status:"ON_HOLD"
-   });
+        ...filter,
+        check_status: "INSUFFICIENT"
+      });
 
-   const stoppedCases =
+    const onHoldCases =
       await Case.countDocuments({
-      ...filter,
-      check_status:"STOPPED"
-   });
+        ...filter,
+        check_status: "ON_HOLD"
+      });
 
-   const rejectedCases =
+    const stoppedCases =
       await Case.countDocuments({
-      ...filter,
-      check_status:"REJECTED"
-   });
+        ...filter,
+        check_status: "STOPPED"
+      });
 
-   res.status(200).json({
-      success:true,
-     data:{
-          totalCases,
-          pendingCases,
-          newCases,
-          inProgressCases,
-          qCheckCases,
-          doneCases,
-          insufficientCases,
-          onHoldCases,
-          stoppedCases,
-          rejectedCases
-          }
-   });
+    const rejectedCases =
+      await Case.countDocuments({
+        ...filter,
+        check_status: "REJECTED"
+      });
 
- }
- catch(error){
-   next(error)
- }
-}
+    res.status(200).json({
+      success: true,
+      data: {
+        totalCases,
+        pendingCases,
+        overdueCases,
+        newCases,
+        inProgressCases,
+        qCheckCases,
+        doneCases,
+        insufficientCases,
+        onHoldCases,
+        stoppedCases,
+        rejectedCases
+      }
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};
 
 //GetSingleCase
 
@@ -360,28 +483,41 @@ exports.getSingleCase = async (req, res, next) => {
 
 };
 
-// update case status 
-exports.updateCaseStatus = async (req, res, next) => {
-
+// UPDATE CASE STATUS
+exports.updateCaseStatus = async (
+  req,
+  res,
+  next
+) => {
   try {
 
-    const { check_status } = req.body;
+    console.log("STATUS UPDATE HIT");
 
-    const updatedCase = await Case.findByIdAndUpdate(
-      req.params.id,
-      { check_status },
-      { new: true }
-    );
+    const { check_status } =
+      req.body;
+
+    const updatedCase =
+      await Case.findByIdAndUpdate(
+        req.params.id,
+        { check_status },
+        { new: true }
+      );
 
     if (!updatedCase) {
-
-      const error = new Error("Case not found");
-
-      error.statusCode = 404;
-
-      return next(error);
-
+      return res.status(404).json({
+        success: false,
+        message: "Case not found",
+      });
     }
+
+    await createAuditLog({
+      userId: req.user.id,
+      action: "STATUS_UPDATED",
+      caseId: updatedCase._id,
+      details:
+        `Status changed to ${check_status}`,
+      module: "CASE",
+    });
 
     res.status(200).json({
       success: true,
@@ -389,18 +525,20 @@ exports.updateCaseStatus = async (req, res, next) => {
     });
 
   } catch (error) {
-
     next(error);
-
   }
-
 };
+
 
 // RAISE INSUFFICIENT QUERY
 exports.raiseInsufficientQuery =
 async (req, res, next) => {
 
   try {
+
+    console.log(
+      "INSUFFICIENT HIT"
+    );
 
     const caseData =
       await Case.findById(
@@ -421,6 +559,16 @@ async (req, res, next) => {
       "INSUFFICIENT";
 
     await caseData.save();
+
+    await createAuditLog({
+      userId: req.user.id,
+      action:
+        "INSUFFICIENT_RAISED",
+      caseId: caseData._id,
+      details:
+        `Insufficient query raised: ${req.body.query}`,
+      module: "CASE",
+    });
 
     res.status(200).json({
       success: true,
