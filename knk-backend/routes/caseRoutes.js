@@ -4,6 +4,7 @@ const router = express.Router();
 
 const validateCase = require("../middlewares/validateCase");
 const validateStatus = require("../middlewares/validateStatus");
+const uploadProof = require("../middlewares/uploadProof");
 
 const {
   protect,
@@ -13,13 +14,15 @@ const {
 const {
   createCase,
   getAllCases,
-  getSingleCase, // ✅ changed
+  getSingleCase, 
   updateCase,
   deleteCase,
   updateCaseStatus,
   assignCase,
   getDashboardStats,
   raiseInsufficientQuery,
+  saveVerification,
+  uploadProofDocument,
 } = require("../controllers/caseController");
 
 
@@ -87,6 +90,21 @@ router.patch(
   "/cases/:id/query",
   protect,
   raiseInsufficientQuery
+);
+
+// SAVE VERIFICATION
+router.patch(
+  "/cases/:id/verify",
+  protect,
+  saveVerification
+);
+
+// UPLOAD PROOF
+router.patch(
+  "/cases/:id/upload-proof",
+  protect,
+  uploadProof.single("proof"),
+  uploadProofDocument
 );
 
 // TEST ROUTE

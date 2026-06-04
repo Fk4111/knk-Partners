@@ -58,8 +58,42 @@ const caseSchema = new mongoose.Schema(
     assignedTo: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User"
-    }
+    },
+    
+    verification_result: {
+  type: String,
+  enum: [
+    "GREEN",
+    "RED",
+    "ORANGE",
+    "INSUFFICIENT",
+  ],
+  default: null,
+},
+
+verification_remark: {
+  type: String,
+  default: "",
+},
+
+verified_by: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "User",
+},
+
+verified_date: {
+  type: Date,
+},
+
+proof_document: {
+  type: String,
+  default: "",
+},
+
   },
+    
+  
+
   {
     timestamps: true
   }

@@ -12,6 +12,7 @@ const ApiInboxRoutes = require("./routes/ApiInboxRoutes");
 const ApiLogRoutes = require("./routes/ApiLogRoutes");
 const auditLogRoutes = require("./routes/auditLogRoutes");
 const reportRoutes = require("./routes/reportRoutes");
+const path = require("path");
 
 const app = express();
 
@@ -41,6 +42,34 @@ app.use(
 );
 
 app.use(express.json());
+
+
+//for file upload
+const uploadsPath = path.resolve(
+  __dirname,
+  "uploads"
+);
+
+console.log(
+  "UPLOADS PATH:",
+  uploadsPath
+);
+
+app.use(
+  "/uploads",
+  express.static(uploadsPath)
+);
+
+app.get("/test-upload", (req, res) => {
+  res.sendFile(
+    path.join(
+      __dirname,
+      "uploads",
+      "proofs",
+      "1780577657739-823550676.jpeg"
+    )
+  );
+});
 
 /* Routes */
 

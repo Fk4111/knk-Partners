@@ -171,6 +171,7 @@ if (req.query.overdue === "true") {
           "assignedTo",
           "email role"
         )
+        
         .sort(sortBy)
         .skip(skip)
         .limit(limit);
@@ -456,7 +457,22 @@ exports.getSingleCase = async (req, res, next) => {
 
     console.log(req.params.id);
 
-    const singleCase = await Case.findById(req.params.id);
+    const singleCase =
+  await Case.findById(
+    req.params.id
+  )
+    .populate(
+      "assignedTo",
+      "email role"
+    )
+    .populate(
+      "user",
+      "email role"
+    )
+    .populate(
+      "verified_by",
+      "email role"
+    );
 
     console.log(singleCase);
 
@@ -581,3 +597,112 @@ async (req, res, next) => {
     next(error);
   }
 };
+
+
+
+exports.saveVerification =
+async (req, res, next) => {
+
+  try {
+
+    const {
+      verification_result,
+      verification_remark,
+      proof_document,
+    } = req.body;
+
+    const caseData =
+      await Case.findById(
+        req.params.id
+      );
+
+    if (!caseData) {
+      return res.status(404).json({
+        success: false,
+        message: "Case not found",
+      });
+    }
+
+    caseData.verification_result =
+      verification_result;
+
+    caseData.verification_remark =
+      verification_remark;
+
+    caseData.proof_document =
+      proof_document || "";
+
+    caseData.verified_by =
+      req.user._id;
+
+    caseData.verified_date =
+      new Date();
+
+    // Auto move to Q_CHECK
+    caseData.check_status =
+      "Q_CHECK";
+
+    await caseData.save();
+
+    await createAuditLog({
+      userId: req.user.id,
+      action: "VERIFICATION_SAVED",
+      caseId: caseData._id,
+      details:
+        `Verification result: ${verification_result}`,
+      module: "CASE",
+    });
+
+    res.status(200).json({
+      success: true,
+      message:
+        "Verification saved successfully",
+      data: caseData,
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.uploadProofDocument =
+  async (req, res, next) => {
+
+    try {
+
+      const caseItem =
+        await Case.findById(
+          req.params.id
+        );
+
+      if (!caseItem) {
+        return res.status(404).json({
+          success: false,
+          message: "Case not found",
+        });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          message: "No file uploaded",
+        });
+      }
+
+      caseItem.proof_document =
+        `/uploads/proofs/${req.file.filename}`;
+
+      await caseItem.save();
+
+      res.status(200).json({
+        success: true,
+        message:
+          "Proof uploaded successfully",
+        proof_document:
+          caseItem.proof_document,
+      });
+
+    } catch (error) {
+      next(error);
+    }
+  };

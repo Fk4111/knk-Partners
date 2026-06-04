@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "../layouts/DashboardLayout";
 import API from "../api/axios";
 import LoadingSpinner from "../components/LoadingSpinner";
+
 import {
   MdFolder,
   MdInbox,
@@ -9,6 +10,7 @@ import {
   MdCheckCircle,
   MdWarning,
   MdErrorOutline,
+  MdDownload,
 } from "react-icons/md";
 
 import {
@@ -19,6 +21,9 @@ import {
   CartesianGrid,
   Tooltip,
 } from "recharts";
+
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 function ReportCard({
   title,
@@ -75,6 +80,109 @@ export default function Reports() {
 
     fetchReports();
   }, []);
+
+ 
+      const handleExportExcel = async () => {
+        try {
+          const res = await API.get(
+        "/cases?page=1&limit=1000"
+      );
+
+          console.log("CASES API RESPONSE:", res.data);
+
+          const cases = res.data.data || [];
+
+          if (cases.length > 0) {
+            console.log("FIRST CASE:", cases[0]);
+          }
+
+        const exportData = cases.map((item) => ({
+        "Reference No":
+          item.comp_ref_no || "-",
+
+        Candidate:
+          item.candidate_name || "-",
+
+        "Father Name":
+          item.father_name || "-",
+
+        DOB: item.candidate_dob
+          ? new Date(
+              item.candidate_dob
+            ).toLocaleDateString()
+          : "-",
+
+        City:
+          item.city || "-",
+
+        State:
+          item.state || "-",
+
+        Vendor:
+          item.vendor || "-",
+
+        Status:
+          item.check_status || "-",
+
+        "Assigned To":
+          item.assignedTo?.email ||
+          "Unassigned",
+
+        TAT:
+          item.tat || "-",
+
+        Remark:
+          item.remark || "-",
+
+        "Created At":
+          item.createdAt
+            ? new Date(
+                item.createdAt
+              ).toLocaleString()
+            : "-",
+      }));
+    const worksheet =
+      XLSX.utils.json_to_sheet(exportData);
+
+      const colWidths = Object.keys(exportData[0]).map((key) => ({
+        wch: Math.max(
+          key.length,
+          ...exportData.map((row) =>
+            String(row[key] || "").length
+          )
+        ) + 5,
+      }));
+
+      worksheet["!cols"] = colWidths;
+
+    const workbook =
+      XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(
+      workbook,
+      worksheet,
+      "Cases Report"
+    );
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    const fileData = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
+    });
+
+    saveAs(
+      fileData,
+      `KNK_Report_${Date.now()}.xlsx`
+    );
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+
 
   if (loading) {
     return (
@@ -141,7 +249,8 @@ export default function Reports() {
         <ReportCard
           title="Total Cases"
           value={
-            stats?.totalCases || 0
+            stats?.totalCases ||
+            0
           }
           icon={MdFolder}
           iconBg="bg-blue-50 text-blue-600"
@@ -150,7 +259,8 @@ export default function Reports() {
         <ReportCard
           title="New Cases"
           value={
-            stats?.newCases || 0
+            stats?.newCases ||
+            0
           }
           icon={MdInbox}
           iconBg="bg-slate-100 text-slate-600"
@@ -169,7 +279,8 @@ export default function Reports() {
         <ReportCard
           title="Done"
           value={
-            stats?.doneCases || 0
+            stats?.doneCases ||
+            0
           }
           icon={
             MdCheckCircle
@@ -198,6 +309,19 @@ export default function Reports() {
           icon={MdWarning}
           iconBg="bg-red-50 text-red-600"
         />
+      </div>
+
+      {/* EXPORT BUTTON */}
+      <div className="mt-6 flex justify-end">
+        <button
+          onClick={
+            handleExportExcel
+          }
+          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow-sm transition"
+        >
+          <MdDownload />
+          Export Excel
+        </button>
       </div>
 
       {/* BAR CHART */}
@@ -229,7 +353,12 @@ export default function Reports() {
             <Bar
               dataKey="value"
               fill="#3B82F6"
-              radius={[8, 8, 0, 0]}
+              radius={[
+                8,
+                8,
+                0,
+                0,
+              ]}
             />
           </BarChart>
         </div>

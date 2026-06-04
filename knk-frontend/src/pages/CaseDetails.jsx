@@ -59,6 +59,9 @@ export default function CaseDetails() {
   const [statusSaving, setStatusSaving] = useState(false);
   const [assignSaving, setAssignSaving] = useState(false);
   const [toast, setToast] = useState(null);
+  const [verificationResult,setVerificationResult,] = useState("");
+  const [verificationRemark,setVerificationRemark,] = useState("");
+  const [proofFile, setProofFile] = useState(null);
 
   // Form state
   const [form, setForm] = useState({
@@ -100,6 +103,14 @@ export default function CaseDetails() {
         remark: d.remark || "",
         internal_notes: d.internal_notes || "",
       });
+
+      setVerificationResult(
+          res.data.data.verification_result || ""
+        );
+
+        setVerificationRemark(
+          res.data.data.verification_remark || ""
+        );
     } catch (err) {
       console.error(err);
     } finally {
@@ -208,12 +219,86 @@ export default function CaseDetails() {
   const canUpdateStatus =
     isAdmin || assignedUserId === user?.id;
 
-    // console.log({
-    // userId: user?.id,
-    // assignedTo: caseData?.assignedTo,
-    // assignedUserId,
-    // canUpdateStatus
-    // });
+const saveVerification =
+  async () => {
+    try {
+
+      await API.patch(
+        `/cases/${id}/verify`,
+        {
+          verification_result:
+            verificationResult,
+
+          verification_remark:
+            verificationRemark,
+        }
+      );
+
+      alert(
+        "Verification saved successfully"
+      );
+
+      fetchCaseDetails();
+
+    } catch (err) {
+
+      console.log(err);
+
+      alert(
+        "Failed to save verification"
+      );
+
+    }
+  };
+
+  const uploadProof =
+  async () => {
+
+    if (!proofFile) {
+      alert(
+        "Please select a file"
+      );
+      return;
+    }
+
+    try {
+
+      const formData =
+        new FormData();
+
+      formData.append(
+        "proof",
+        proofFile
+      );
+
+      const res =
+        await API.patch(
+          `/cases/${id}/upload-proof`,
+          formData,
+          {
+            headers: {
+              "Content-Type":
+                "multipart/form-data",
+            },
+          }
+        );
+
+      alert(
+        "Proof uploaded successfully"
+      );
+
+      fetchCaseDetails();
+
+    } catch (err) {
+
+      console.log(err);
+
+      alert(
+        "Upload failed"
+      );
+
+    }
+  };
 
   return (
     <DashboardLayout title="Case Details" breadcrumbs={["Home", "Cases", caseData.comp_ref_no]}>
@@ -326,6 +411,139 @@ export default function CaseDetails() {
               </div>
             </div>
             )}
+
+            {/* C. Verification Details */}
+          <div className="bg-white rounded-xl border border-slate-100 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-50">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">
+                C. Verification Details
+              </p>
+            </div>
+
+            <div className="p-5 space-y-4">
+
+              <div>
+                <label className="block text-xs text-slate-500 mb-1">
+                  Verification Result
+                </label>
+              <select
+                value={verificationResult}
+                onChange={(e) =>
+                  setVerificationResult(
+                    e.target.value
+                  )
+                }
+                className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm"
+              >
+                  <option value="">
+                    Select Result
+                  </option>
+
+                  <option value="GREEN">
+                    GREEN
+                  </option>
+
+                  <option value="RED">
+                    RED
+                  </option>
+
+                  <option value="ORANGE">
+                    ORANGE
+                  </option>
+
+                  <option value="INSUFFICIENT">
+                    INSUFFICIENT
+                  </option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs text-slate-500 mb-1">
+                  Verification Remark
+                </label>
+
+               <textarea
+                    value={verificationRemark}
+                    onChange={(e) =>
+                      setVerificationRemark(
+                        e.target.value
+                      )
+                    }
+                  placeholder="Enter verification remarks..."
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-slate-500 mb-1">
+                  Proof Document
+                </label>
+
+               <input
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={(e) =>
+                    setProofFile(
+                      e.target.files[0]
+                    )
+                  }
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2"
+                />
+
+                <div className="mt-3">
+                <button
+                  onClick={uploadProof}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"
+                >
+                  Upload Proof
+                </button>
+              </div>
+              </div>
+
+              <button
+                onClick={
+                  saveVerification
+                }
+                className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium"
+              >
+                Save Verification
+              </button>
+
+            </div>
+          </div>
+
+          {caseData?.verified_by && (
+            <div className="bg-slate-50 border rounded-lg p-3 text-sm">
+              <p>
+                <strong>Verified By:</strong>{" "}
+                {caseData?.verified_by?.email || "-"}
+              </p>
+
+              <p>
+                <strong>Verified Date:</strong>{" "}
+                {caseData?.verified_date
+                  ? new Date(
+                      caseData.verified_date
+                    ).toLocaleString()
+                  : "-"}
+              </p>
+            </div>
+          )}
+
+          {caseData?.proof_document && (
+          <div className="mt-3">
+
+            <a
+              href={`http://localhost:5000${caseData.proof_document}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center bg-slate-800 text-white px-4 py-2 rounded-lg"
+            >
+              View Proof
+            </a>
+
+          </div>
+        )}
 
           </div>
           
