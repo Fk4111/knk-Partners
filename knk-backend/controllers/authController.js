@@ -63,6 +63,7 @@ exports.loginUser = async (req, res, next) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        avatar: user.avatar,
       },
     });
 
@@ -156,7 +157,8 @@ exports.changePassword = async (
   }
 };
 
-// Get profile detail 
+ 
+// Get profile detail
 exports.updateProfile = async (req, res) => {
   try {
     console.log("BODY =>", req.body);
@@ -177,17 +179,25 @@ exports.updateProfile = async (req, res) => {
 
     await user.save();
 
+    const updatedUser = await User.findById(
+      req.user.id
+    ).select("-password");
+
     res.json({
       message: "Profile updated successfully",
-      user,
+      user: updatedUser,
     });
-  } catch (error) {
-  console.log("UPDATE PROFILE ERROR =>", error);
 
-  res.status(500).json({
-    message: error.message,
-  });
-}
+  } catch (error) {
+    console.log(
+      "UPDATE PROFILE ERROR =>",
+      error
+    );
+
+    res.status(500).json({
+      message: error.message,
+    });
+  }
 };
 
 // Upload Avatar

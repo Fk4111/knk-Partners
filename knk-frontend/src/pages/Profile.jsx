@@ -2,9 +2,11 @@ import { useState, useEffect } from "react";
 import DashboardLayout from "../layouts/DashboardLayout";
 import API from "../api/axios";
 import { toast } from "react-toastify";
+import { useAuth } from "../context/AuthContext";
 
 function Profile() {
   const [editMode, setEditMode] = useState(false);
+  const { user, login } = useAuth();
 
   const [profile, setProfile] = useState({
     name: "",
@@ -12,6 +14,7 @@ function Profile() {
     phone: "",
     role: "",
     createdAt: "",
+    avatar: "",
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -34,11 +37,60 @@ function Profile() {
         phone: res.data.phone || "",
         role: res.data.role || "",
         createdAt: res.data.createdAt || "",
+        avatar: res.data.avatar || "",
       });
     } catch (error) {
       console.error(error);
     }
   };
+
+  // handle avatar upload
+  const handleAvatarUpload = async (e) => {
+  try {
+    const file = e.target.files[0];
+
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("avatar", file);
+
+    const res = await API.patch(
+      "/auth/avatar",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    // Update Profile Page Avatar
+    setProfile((prev) => ({
+      ...prev,
+      avatar: res.data.avatar,
+    }));
+
+    // Update AuthContext + localStorage
+    const updatedUser = {
+      ...user,
+      avatar: res.data.avatar,
+    };
+
+    login(
+      localStorage.getItem("token"),
+      updatedUser
+    );
+
+    toast.success("Avatar uploaded successfully");
+  } catch (error) {
+    console.error(error);
+
+    toast.error(
+      error.response?.data?.message ||
+      "Failed to upload avatar"
+    );
+  }
+};
 
   const handleProfileSave = async () => {
     try {
@@ -117,6 +169,31 @@ function Profile() {
           </div>
 
           <div className="p-6 space-y-5">
+
+            <div className="flex flex-col items-center mb-6">
+
+              <img
+                src={
+                  profile.avatar
+                    ? `http://localhost:5000${profile.avatar}`
+                    : "https://ui-avatars.com/api/?name=User"
+                }
+                alt="Avatar"
+                className="w-28 h-28 rounded-full border-4 border-slate-200 object-cover"
+              />
+
+              <label className="mt-3 cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">
+                Upload Avatar
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  className="hidden"
+                />
+              </label>
+
+            </div>
 
             <div>
               <label className="text-sm text-slate-500">

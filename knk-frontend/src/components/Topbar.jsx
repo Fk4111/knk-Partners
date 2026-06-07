@@ -20,6 +20,11 @@ function Topbar({
       ? user.email.slice(0, 2).toUpperCase()
       : "KN";
 
+      const avatarUrl = user?.avatar
+      ? `http://localhost:5000${user.avatar}`
+      : null;
+
+
   return (
     <header className="h-14 bg-white border-b border-slate-100 flex items-center px-4 md:px-6 gap-4 sticky top-0 z-20">
 
@@ -69,45 +74,53 @@ function Topbar({
 
         {/* Bell */}
         <button
- onClick={() => navigate("/cases?status=NEW") }
- className="
- relative
- w-8 h-8
- flex items-center justify-center
- rounded-lg
- hover:bg-slate-100
- text-slate-500
- transition-colors
- "
->
-   <MdNotifications className="text-lg"/>
+          onClick={() => navigate("/cases?status=NEW") }
+          className="
+          relative
+          w-8 h-8
+          flex items-center justify-center
+          rounded-lg
+          hover:bg-slate-100
+          text-slate-500
+          transition-colors
+          "
+          >
+          <MdNotifications className="text-lg"/>
 
-   {notificationCount > 0 && (
-      <span className="
-      absolute
-      -top-1
-      -right-1
-      min-w-[18px]
-      h-[18px]
-      px-1
-      bg-green-500
-      text-white
-      rounded-full
-      text-[10px]
-      flex items-center justify-center font-bold
-      ">
-         {notificationCount > 9 ? "9+" : notificationCount}
-      </span>
-   )}
-</button>
+          {notificationCount > 0 && (
+              <span className="
+              absolute
+              -top-1
+              -right-1
+              min-w-[18px]
+              h-[18px]
+              px-1
+              bg-green-500
+              text-white
+              rounded-full
+              text-[10px]
+              flex items-center justify-center font-bold
+              ">
+                {notificationCount > 9 ? "9+" : notificationCount}
+              </span>
+          )}
+        </button>
 
 
         {/* User */}
         <div className="flex items-center gap-2 cursor-pointer group">
 
-          <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
-            {initials}
-          </div>
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt="Avatar"
+              className="w-8 h-8 rounded-full object-cover border border-slate-200"
+            />
+          ) : (
+            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+              {initials}
+            </div>
+          )}
 
           <div className="hidden md:block">
 
