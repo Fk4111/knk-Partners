@@ -52,13 +52,6 @@ const NAV = [
     ]
   },
   {
-    section: "ADMIN",
-    items: [
-      { label: "Users & Agents", path: "/users", icon: MdGroup },
-      { label: "Settings", path: "/settings", icon: MdSettings },
-    ]
-  },
-  {
     section: "ACCOUNT",
     items: [
       { label: "My Profile", path: "/profile", icon: MdPerson },

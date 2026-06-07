@@ -1,3 +1,5 @@
+// Whenever client API / callback / inbox request will hit ... it will automatically save Logs in MongoDB
+
 const ApiLog =
   require("../models/ApiLog");
 

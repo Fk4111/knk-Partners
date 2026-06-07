@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 
 // Generate Token
 const generateToken = (id) => {
@@ -84,5 +85,142 @@ exports.getAllUsers = async (req, res, next) => {
 
   } catch (error) {
     next(error);
+  }
+};
+
+// get profile details
+exports.getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(
+      req.user.id
+    ).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+// for change password 
+exports.changePassword = async (
+  req,
+  res
+) => {
+  try {
+    const {
+      currentPassword,
+      newPassword,
+    } = req.body;
+
+    const user =
+      await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    const isMatch =
+      await user.matchPassword(
+        currentPassword
+      );
+
+    if (!isMatch) {
+      return res.status(400).json({
+        message:
+          "Current password is incorrect",
+      });
+    }
+
+    user.password = newPassword;
+
+    await user.save();
+
+    res.json({
+      message:
+        "Password updated successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+// Get profile detail 
+exports.updateProfile = async (req, res) => {
+  try {
+    console.log("BODY =>", req.body);
+    console.log("USER =>", req.user);
+
+    const user = await User.findById(req.user.id);
+
+    console.log("FOUND USER =>", user);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    user.name = req.body.name || user.name;
+    user.phone = req.body.phone || user.phone;
+
+    await user.save();
+
+    res.json({
+      message: "Profile updated successfully",
+      user,
+    });
+  } catch (error) {
+  console.log("UPDATE PROFILE ERROR =>", error);
+
+  res.status(500).json({
+    message: error.message,
+  });
+}
+};
+
+// Upload Avatar
+exports.uploadAvatar = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        message: "Please upload an image",
+      });
+    }
+
+    user.avatar = `/uploads/avatars/${req.file.filename}`;
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Avatar uploaded successfully",
+      avatar: user.avatar,
+    });
+  } catch (error) {
+    console.log("UPLOAD AVATAR ERROR =>", error);
+
+    res.status(500).json({
+      message: error.message,
+    });
   }
 };
