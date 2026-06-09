@@ -1,6 +1,8 @@
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const fs = require("fs");
+const path = require("path");
 
 // Generate Token
 const generateToken = (id) => {
@@ -53,6 +55,9 @@ exports.loginUser = async (req, res, next) => {
       error.statusCode = 401;
       return next(error);
     }
+     
+    user.lastLogin = new Date();
+        await user.save();
 
     res.status(200).json({
       success: true,
@@ -216,6 +221,19 @@ exports.uploadAvatar = async (req, res) => {
         message: "Please upload an image",
       });
     }
+        
+     // Delete old avatar if exists
+      if (user.avatar) {
+        const oldAvatarPath = path.join(
+          __dirname,
+          "..",
+          user.avatar
+        );
+
+        if (fs.existsSync(oldAvatarPath)) {
+          fs.unlinkSync(oldAvatarPath);
+        }
+      }
 
     user.avatar = `/uploads/avatars/${req.file.filename}`;
 

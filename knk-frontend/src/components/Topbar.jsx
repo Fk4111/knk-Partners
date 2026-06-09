@@ -21,7 +21,7 @@ function Topbar({
       : "KN";
 
       const avatarUrl = user?.avatar
-      ? `http://localhost:5000${user.avatar}`
+      ? `${import.meta.env.VITE_SERVER_URL}${user.avatar}`
       : null;
 
 
@@ -74,7 +74,7 @@ function Topbar({
 
         {/* Bell */}
         <button
-          onClick={() => navigate("/cases?status=NEW") }
+          onClick={() => navigate("/inbox")}
           className="
           relative
           w-8 h-8
@@ -125,7 +125,7 @@ function Topbar({
           <div className="hidden md:block">
 
             <div className="text-xs font-semibold text-slate-900 leading-tight">
-              {user?.email?.split("@")[0] || "Admin"}
+              {user?.name || user?.email?.split("@")[0] || "Admin"}
             </div>
 
             <div className="text-[10px] text-slate-400 capitalize">

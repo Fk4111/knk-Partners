@@ -15,6 +15,7 @@ function Profile() {
     role: "",
     createdAt: "",
     avatar: "",
+    lastLogin: "",
   });
 
   const [passwordData, setPasswordData] = useState({
@@ -38,18 +39,34 @@ function Profile() {
         role: res.data.role || "",
         createdAt: res.data.createdAt || "",
         avatar: res.data.avatar || "",
+        lastLogin: res.data.lastLogin || "",
       });
     } catch (error) {
       console.error(error);
     }
   };
 
-  // handle avatar upload
-  const handleAvatarUpload = async (e) => {
+ // Handle avatar upload
+ // handle avatar upload
+const handleAvatarUpload = async (e) => {
   try {
     const file = e.target.files[0];
 
     if (!file) return;
+
+    // File type validation
+    if (!file.type.startsWith("image/")) {
+      return toast.error(
+        "Please select a valid image file"
+      );
+    }
+
+    // File size validation (2 MB)
+    if (file.size > 2 * 1024 * 1024) {
+      return toast.error(
+        "Image size should be less than 2 MB"
+      );
+    }
 
     const formData = new FormData();
     formData.append("avatar", file);
@@ -59,7 +76,8 @@ function Profile() {
       formData,
       {
         headers: {
-          "Content-Type": "multipart/form-data",
+          "Content-Type":
+            "multipart/form-data",
         },
       }
     );
@@ -81,7 +99,10 @@ function Profile() {
       updatedUser
     );
 
-    toast.success("Avatar uploaded successfully");
+    toast.success(
+      "Avatar uploaded successfully"
+    );
+
   } catch (error) {
     console.error(error);
 
@@ -92,29 +113,42 @@ function Profile() {
   }
 };
 
-  const handleProfileSave = async () => {
-    try {
-      await API.put("/auth/profile", {
+ const handleProfileSave = async () => {
+  try {
+    const res = await API.put("/auth/profile", {
+      name: profile.name,
+      phone: profile.phone,
+    });
+
+    // Update AuthContext + localStorage instantly
+    const updatedUser = {
+        ...user,
         name: profile.name,
         phone: profile.phone,
-      });
+        avatar: profile.avatar,
+      };
 
-      toast.success("Profile updated successfully");
+    login(
+      localStorage.getItem("token"),
+      updatedUser
+    );
 
-      setEditMode(false);
+    toast.success("Profile updated successfully");
 
-      fetchProfile();
-    } catch (error) {
-      console.log("FULL ERROR =>", error);
-      console.log("RESPONSE =>", error.response);
-      console.log("DATA =>", error.response?.data);
+    setEditMode(false);
 
-     toast.error(
-          error.response?.data?.message ||
-          "Failed to change password"
-        );
-    }
-  };
+    fetchProfile();
+  } catch (error) {
+    console.log("FULL ERROR =>", error);
+    console.log("RESPONSE =>", error.response);
+    console.log("DATA =>", error.response?.data);
+
+    toast.error(
+      error.response?.data?.message ||
+      "Failed to update profile"
+    );
+  }
+};
 
   const handlePasswordChange = async () => {
     try {
@@ -173,11 +207,11 @@ function Profile() {
             <div className="flex flex-col items-center mb-6">
 
               <img
-                src={
-                  profile.avatar
-                    ? `http://localhost:5000${profile.avatar}`
-                    : "https://ui-avatars.com/api/?name=User"
-                }
+               src={
+              profile.avatar
+                ? `${import.meta.env.VITE_SERVER_URL}${profile.avatar}`
+                : "https://ui-avatars.com/api/?name=User"
+            }
                 alt="Avatar"
                 className="w-28 h-28 rounded-full border-4 border-slate-200 object-cover"
               />
@@ -275,6 +309,24 @@ function Profile() {
                         }
                       )
                     : ""
+                }
+                className="w-full mt-1 border rounded-lg p-3 bg-slate-100"
+              />
+            </div>
+
+            <div>
+              <label className="text-sm text-slate-500">
+                Last Login
+              </label>
+
+              <input
+                disabled
+                value={
+                  profile.lastLogin
+                    ? new Date(
+                        profile.lastLogin
+                      ).toLocaleString("en-GB")
+                    : "Never"
                 }
                 className="w-full mt-1 border rounded-lg p-3 bg-slate-100"
               />

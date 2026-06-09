@@ -534,7 +534,7 @@ const saveVerification =
           <div className="mt-3">
 
             <a
-              href={`http://localhost:5000${caseData.proof_document}`}
+              href={`${import.meta.env.VITE_SERVER_URL}${caseData.proof_document}`}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center bg-slate-800 text-white px-4 py-2 rounded-lg"

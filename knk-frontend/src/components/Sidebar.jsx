@@ -188,7 +188,7 @@ const filteredNAV = NAV.map(group => ({
             {initials}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-xs font-semibold text-slate-900 truncate">{user?.email || "Admin"}</div>
+            <div className="text-xs font-semibold text-slate-900 truncate">{user?.name || user?.email || "Admin"}</div>
             <div className="text-[10px] text-slate-400 capitalize">{user?.role || "admin"}</div>
           </div>
           <button onClick={handleLogout} className="text-slate-400 hover:text-red-500 transition-colors" title="Logout">
