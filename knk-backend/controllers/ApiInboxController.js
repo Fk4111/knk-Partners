@@ -26,53 +26,52 @@ const getApiRequests = async (req, res) => {
 
 
 // CREATE NEW API REQUEST
-const createApiRequest = async (
-  req,
-  res
-) => {
+const createApiRequest = async (req, res) => {
   try {
 
-    const request =
-      await ApiRequest.create(
-        req.body
-      );
+    // Prevent duplicate application IDs
+    const existingRequest = await ApiRequest.findOne({
+      applicationId: req.body.applicationId,
+    });
+
+    if (existingRequest) {
+      return res.status(400).json({
+        success: false,
+        message: "Application ID already exists",
+      });
+    }
+
+    const request = await ApiRequest.create(req.body);
 
     // API LOG CREATE
     await createApiLog({
-      appId:
-        request.applicationId ||
-        "",
-
-      endpoint:
-        req.originalUrl,
-
-      method:
-        req.method,
-
-      status:
-        "SUCCESS",
-
-      source:
-        "Client API",
-
-      requestBody:
-        req.body,
-
+      appId: request.applicationId || "",
+      endpoint: req.originalUrl,
+      method: req.method,
+      status: "SUCCESS",
+      source: "Client API",
+      requestBody: req.body,
       responseBody: {
-        message:
-          "API request received",
+        message: "API request received",
       },
     });
 
-    res.status(201).json(
-      request
-    );
+    // CLEAN CLIENT RESPONSE
+    return res.status(201).json({
+      success: true,
+      message: "Request received successfully",
+      applicationId: request.applicationId,
+      status: "PENDING",
+      receivedAt: request.createdAt,
+    });
 
   } catch (error) {
 
-    res.status(500).json({
-      message:
-        error.message,
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
     });
 
   }

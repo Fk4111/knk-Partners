@@ -6,6 +6,7 @@ const {
   processApiRequest,
   getRecentApiActivity,
 } = require("../controllers/ApiInboxController");
+const apiKeyAuth = require("../middlewares/apiKeyAuth");
 
 const router = express.Router();
 
@@ -23,6 +24,9 @@ router.post("/", createApiRequest);
 
 // PROCESS REQUEST
 router.post("/process/:id", processApiRequest);
+
+// CLIENT ROUTE (Protected by API Key)
+router.post("/", apiKeyAuth, createApiRequest);
 
 
 
