@@ -278,6 +278,7 @@ const notificationCount =
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
 
           {/* Cases by Status */}
+          {isAdmin && (
           <div className="xl:col-span-2 bg-white rounded-xl border border-slate-100 p-6">
             <div className="flex items-center gap-2 mb-5">
               <MdSyncAlt className="text-blue-600 text-xl" />
@@ -310,6 +311,8 @@ const notificationCount =
               ))}
             </div>
           </div>
+          )
+        }
 
           {/* Employee Workload */}
           {isAdmin && (

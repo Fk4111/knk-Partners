@@ -5,6 +5,9 @@ build/
 
 knk-backend/node_modules/
 knk-backend/.env
+knk-backend/uploads/
+knk-backend/uploads/avatars/
+knk-backend/uploads/proofs/
 
 knk-frontend/node_modules/
 knk-frontend/.env
