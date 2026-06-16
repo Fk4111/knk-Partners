@@ -14,6 +14,7 @@ import Users from "../pages/Users";
 import Settings from "../pages/Settings";
 import Profile from "../pages/Profile";
 import ProtectedRoute from "./ProtectedRoute";
+import Clients from "../pages/Clients";
 
 
 function AppRoutes() {
@@ -32,6 +33,7 @@ function AppRoutes() {
       <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+      <Route path="/clients" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
       <Route path="/api-inbox" element={<ProtectedRoute><ApiInbox /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>

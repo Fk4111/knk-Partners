@@ -12,6 +12,8 @@ const ApiInboxRoutes = require("./routes/ApiInboxRoutes");
 const ApiLogRoutes = require("./routes/ApiLogRoutes");
 const auditLogRoutes = require("./routes/auditLogRoutes");
 const reportRoutes = require("./routes/reportRoutes");
+const clientApiRoutes = require("./routes/clientApiRoutes");
+const clientRoutes = require("./routes/clientRoutes");
 const path = require("path");
 
 const app = express();
@@ -50,11 +52,6 @@ const uploadsPath = path.resolve(
   "uploads"
 );
 
-console.log(
-  "UPLOADS PATH:",
-  uploadsPath
-);
-
 app.use(
   "/uploads",
   express.static(uploadsPath)
@@ -79,6 +76,8 @@ app.use("/api/v1/api-inbox", ApiInboxRoutes);
 app.use("/api/v1/api-logs", ApiLogRoutes);
 app.use("/api/v1/audit-logs", auditLogRoutes);
 app.use("/api/v1/reports", reportRoutes);
+app.use("/api/v1/client", clientApiRoutes);
+app.use("/api/v1/clients", clientRoutes);
 
 /* Error Handling Middleware */
 app.use(errorHandler);

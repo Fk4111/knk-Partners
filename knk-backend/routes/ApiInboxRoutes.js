@@ -18,15 +18,15 @@ router.get("/", getApiRequests);
 // RECENT API ACTIVITY
 router.get("/activity", getRecentApiActivity);
 
-// CREATE REQUEST
-router.post("/", createApiRequest);
+// // CREATE REQUEST
+// router.post("/", createApiRequest);
 
 
 // PROCESS REQUEST
 router.post("/process/:id", processApiRequest);
 
 // CLIENT ROUTE (Protected by API Key)
-router.post("/", apiKeyAuth, createApiRequest);
+router.post("/client", apiKeyAuth, createApiRequest);
 
 
 

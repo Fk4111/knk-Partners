@@ -4,7 +4,8 @@ import { useAuth } from "../context/AuthContext";
 import {
   MdDashboard, MdInbox, MdFolder, MdFilterList, MdApi,
   MdBarChart, MdHistory, MdGroup, MdSettings, MdPerson,
-  MdLogout, MdSecurity, MdKeyboardArrowDown, MdKeyboardArrowUp
+  MdLogout, MdSecurity, MdKeyboardArrowDown, MdKeyboardArrowUp,
+  MdBusiness
 } from "react-icons/md";
 
 const NAV = [
@@ -14,7 +15,9 @@ const NAV = [
       { label: "Dashboard", path: "/dashboard", icon: MdDashboard },
       { label: "API Requests Inbox", path: "/inbox", icon: MdInbox, badge: "apiInbox" },
     ]
-  },
+
+    
+    },
   {
     section: "CASES",
     items: [
@@ -41,6 +44,27 @@ const NAV = [
         { label: "Rejected", path: "/cases?status=REJECTED" },
       ]
       },
+    ]
+  },
+
+    {
+    section: "ADMIN",
+    items: [
+      {
+        label: "Clients",
+        path: "/Clients",
+        icon: MdBusiness
+      },
+      {
+        label: "Users & Agents",
+        path: "/users",
+        icon: MdGroup
+      },
+      {
+        label: "Settings",
+        path: "/settings",
+        icon: MdSettings
+      }
     ]
   },
   {
@@ -137,7 +161,8 @@ const filteredNAV = NAV.map(group => ({
         "Reports",
         "Audit Log",
         "Users & Agents",
-        "Settings"
+        "Settings",
+        "Clients"
       ].includes(item.label)
     ) {
       return false;

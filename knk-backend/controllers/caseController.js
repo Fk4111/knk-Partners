@@ -1,5 +1,6 @@
 const Case = require("../models/Case");
 const createAuditLog = require("../utils/auditLogger");
+const sendWebhook = require("../utils/sendWebhook");
 
 // POST - create case
 exports.createCase = async (req, res, next) => {
@@ -526,6 +527,8 @@ exports.updateCaseStatus = async (
       });
     }
 
+    await sendWebhook(updatedCase);
+
     await createAuditLog({
       userId: req.user.id,
       action: "STATUS_UPDATED",
@@ -575,6 +578,8 @@ async (req, res, next) => {
       "INSUFFICIENT";
 
     await caseData.save();
+
+    await sendWebhook(caseData);
 
     await createAuditLog({
       userId: req.user.id,
@@ -643,6 +648,8 @@ async (req, res, next) => {
       "Q_CHECK";
 
     await caseData.save();
+
+    await sendWebhook(caseData);
 
     await createAuditLog({
       userId: req.user.id,

@@ -28,10 +28,29 @@ const getApiRequests = async (req, res) => {
 // CREATE NEW API REQUEST
 const createApiRequest = async (req, res) => {
   try {
+    const {
+      applicationId,
+      candidateName,
+      fatherName,
+      dob,
+      city,
+      state,
+      tat,
+      remark,
+      attachment,
+    } = req.body;
+
+    // Basic validation
+    if (!applicationId) {
+      return res.status(400).json({
+        success: false,
+        message: "Application ID is required",
+      });
+    }
 
     // Prevent duplicate application IDs
     const existingRequest = await ApiRequest.findOne({
-      applicationId: req.body.applicationId,
+      applicationId,
     });
 
     if (existingRequest) {
@@ -41,7 +60,22 @@ const createApiRequest = async (req, res) => {
       });
     }
 
-    const request = await ApiRequest.create(req.body);
+    // Vendor comes ONLY from API key middleware
+    const request = await ApiRequest.create({
+      applicationId,
+      candidateName,
+      fatherName,
+      dob,
+      city,
+      state,
+      tat,
+      remark,
+      attachment,
+
+      // SECURITY:
+      // Ignore vendor from request body
+      vendor: req.vendor,
+    });
 
     // API LOG CREATE
     await createApiLog({
@@ -49,31 +83,29 @@ const createApiRequest = async (req, res) => {
       endpoint: req.originalUrl,
       method: req.method,
       status: "SUCCESS",
-      source: "Client API",
+      source: req.vendor || "Client API",
       requestBody: req.body,
       responseBody: {
         message: "API request received",
       },
     });
 
-    // CLEAN CLIENT RESPONSE
     return res.status(201).json({
       success: true,
       message: "Request received successfully",
       applicationId: request.applicationId,
       status: "PENDING",
+      vendor: req.vendor,
       receivedAt: request.createdAt,
     });
 
   } catch (error) {
-
     console.error(error);
 
     return res.status(500).json({
       success: false,
       message: "Internal server error",
     });
-
   }
 };
 
