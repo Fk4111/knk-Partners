@@ -134,6 +134,33 @@ useEffect(() => {
 
 };
 
+// for archiving a case
+
+const archiveCase = async (id) => {
+  try {
+    const confirmArchive = window.confirm(
+      "Archive this case?"
+    );
+
+    if (!confirmArchive) return;
+
+    await API.patch(
+      `/cases/${id}/archive`
+    );
+
+    alert("Case archived successfully");
+
+    fetchCases();
+  } catch (error) {
+    console.error(error);
+
+    alert(
+      error?.response?.data?.message ||
+      "Failed to archive case"
+    );
+  }
+};
+
 
   return (
     <DashboardLayout
@@ -354,30 +381,55 @@ useEffect(() => {
             )}
           </td>
 
-          <td className="px-6 py-5">
+                <td className="px-6 py-5">
+
+        <div className="flex gap-2">
+
+          <button
+            onClick={() =>
+              navigate(`/cases/${c._id}`)
+            }
+            className="
+            border border-blue-200
+            text-blue-600
+            px-4 py-2
+            rounded-xl
+            hover:bg-blue-50
+            flex items-center gap-2
+            text-sm
+            "
+          >
+            <MdVisibility />
+            View
+          </button>
+
+          {[
+            "DONE",
+            "REJECTED",
+            "STOPPED",
+          ].includes(c.check_status) && (
 
             <button
               onClick={() =>
-                navigate(`/cases/${c._id}`)
+                archiveCase(c._id)
               }
-
               className="
-              border border-blue-200
-              text-blue-600
+              bg-red-100
+              text-red-700
               px-4 py-2
               rounded-xl
-              hover:bg-blue-50
-              flex items-center gap-2
               text-sm
+              hover:bg-red-200
               "
             >
-
-              <MdVisibility />
-              View
-
+              Archive
             </button>
 
-          </td>
+          )}
+
+        </div>
+
+      </td>
 
         </tr>
 

@@ -14,7 +14,7 @@ const {
 const {
   createCase,
   getAllCases,
-  getSingleCase, 
+  getSingleCase,
   updateCase,
   deleteCase,
   updateCaseStatus,
@@ -23,6 +23,10 @@ const {
   raiseInsufficientQuery,
   saveVerification,
   uploadProofDocument,
+  archiveCase,
+  getArchivedCases,
+  restoreCase,
+  bulkDeleteCases,
 } = require("../controllers/caseController");
 
 
@@ -48,10 +52,19 @@ router.get(
   getAllCases
 );
 
+// GET ARCHIVED CASES
+router.get(
+  "/cases/archived",
+  protect,
+  adminOnly,
+  getArchivedCases
+);
+
+// SINGLE CASE
 router.get(
   "/cases/:id",
   protect,
-  getSingleCase // ✅ changed
+  getSingleCase
 );
 
 router.put(
@@ -85,12 +98,14 @@ router.patch(
   assignCase
 );
 
+
 // RAISE QUERY
 router.patch(
   "/cases/:id/query",
   protect,
   raiseInsufficientQuery
 );
+
 
 // SAVE VERIFICATION
 router.patch(
@@ -99,6 +114,7 @@ router.patch(
   saveVerification
 );
 
+
 // UPLOAD PROOF
 router.patch(
   "/cases/:id/upload-proof",
@@ -106,6 +122,33 @@ router.patch(
   uploadProof.single("proof"),
   uploadProofDocument
 );
+
+
+// ARCHIVE CASE
+router.patch(
+  "/cases/:id/archive",
+  protect,
+  adminOnly,
+  archiveCase
+);
+
+
+// RESTORE CASE
+router.patch(
+  "/cases/:id/restore",
+  protect,
+  adminOnly,
+  restoreCase
+);
+
+// multiple Archive cases
+router.delete(
+  "/cases/bulk-delete",
+  protect,
+  adminOnly,
+  bulkDeleteCases
+);
+
 
 // TEST ROUTE
 router.get("/test", (req, res) => {

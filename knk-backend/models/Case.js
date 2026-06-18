@@ -90,6 +90,21 @@ proof_document: {
   default: "",
 },
 
+isArchived: {
+  type: Boolean,
+  default: false,
+},
+
+archivedAt: {
+  type: Date,
+  default: null,
+},
+
+archivedBy: {
+  type: String,
+  default: null,
+},
+
   },
     
   
@@ -97,6 +112,10 @@ proof_document: {
   {
     timestamps: true
   }
+
+  
 );
+
+
 
 module.exports = mongoose.models.Case || mongoose.model("Case", caseSchema);

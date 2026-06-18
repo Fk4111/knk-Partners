@@ -41,7 +41,12 @@ exports.getAllCases = async (req, res, next) => {
       (page - 1) * limit;
 
     // Filters
-    let filter = {};
+    let filter = {
+      $or: [
+        { isArchived: false },
+        { isArchived: { $exists: false } },
+      ],
+    };
 
     // Agent → only assigned cases
     if (
@@ -713,3 +718,151 @@ exports.uploadProofDocument =
       next(error);
     }
   };
+
+
+  // To Archive cases
+
+  // ARCHIVE CASE
+exports.archiveCase = async (req, res) => {
+  try {
+
+    const caseData =
+      await Case.findById(req.params.id);
+
+    if (!caseData) {
+      return res.status(404).json({
+        success: false,
+        message: "Case not found",
+      });
+    }
+
+    caseData.isArchived = true;
+    caseData.archivedAt = new Date();
+    caseData.archivedBy =
+      req.user?.email || "Admin";
+
+    await caseData.save();
+
+    await createAuditLog({
+      userId: req.user.id,
+      action: "CASE_ARCHIVED",
+      caseId: caseData._id,
+      details: "Case archived",
+      module: "CASE",
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Case archived successfully",
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+
+  }
+};
+
+  exports.getArchivedCases = async (req, res) => {
+  try {
+
+    const cases = await Case.find({
+      isArchived: true,
+    })
+      .populate(
+        "assignedTo",
+        "email"
+      )
+      .sort({
+        archivedAt: -1,
+      });
+
+    res.status(200).json({
+      success: true,
+      data: cases,
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+
+  }
+};
+
+// restore archive cases
+exports.restoreCase = async (req, res) => {
+  try {
+
+    const updatedCase =
+      await Case.findByIdAndUpdate(
+        req.params.id,
+        {
+          isArchived: false,
+          archivedAt: null,
+          archivedBy: null,
+        },
+        {
+          new: true,
+        }
+      );
+
+    if (!updatedCase) {
+      return res.status(404).json({
+        success: false,
+        message: "Case not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Case restored successfully",
+      data: updatedCase,
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+
+  }
+};
+
+
+
+// Multiple select 
+exports.bulkDeleteCases = async (
+  req,
+  res
+) => {
+  try {
+
+    const { ids } = req.body;
+
+    await Case.deleteMany({
+      _id: { $in: ids },
+      isArchived: true,
+    });
+
+    res.status(200).json({
+      success: true,
+      message:
+        "Cases deleted successfully",
+    });
+
+  } catch (error) {
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+
+  }
+};

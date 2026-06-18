@@ -2,10 +2,22 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
-  MdDashboard, MdInbox, MdFolder, MdFilterList, MdApi,
-  MdBarChart, MdHistory, MdGroup, MdSettings, MdPerson,
-  MdLogout, MdSecurity, MdKeyboardArrowDown, MdKeyboardArrowUp,
-  MdBusiness
+  MdDashboard,
+  MdInbox,
+  MdFolder,
+  MdFilterList,
+  MdApi,
+  MdBarChart,
+  MdHistory,
+  MdGroup,
+  MdSettings,
+  MdPerson,
+  MdLogout,
+  MdSecurity,
+  MdKeyboardArrowDown,
+  MdKeyboardArrowUp,
+  MdBusiness,
+  MdArchive
 } from "react-icons/md";
 
 const NAV = [
@@ -22,6 +34,11 @@ const NAV = [
     section: "CASES",
     items: [
       { label: "All Cases", path: "/cases", icon: MdFolder },
+      {
+      label: "Archived Cases",
+      path: "/archived-cases",
+      icon: MdArchive
+    },
       { label: "By Status", path: "/cases/by-status", icon: MdFilterList, hasChildren: true,
        children: [
 
