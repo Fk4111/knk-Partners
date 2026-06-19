@@ -208,6 +208,8 @@ exports.uploadAvatar = async (
   req,
   res
 ) => {
+
+  console.log(req.file);
   try {
 
     const user =
