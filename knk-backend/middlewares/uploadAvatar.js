@@ -1,51 +1,40 @@
 const multer = require("multer");
-const path = require("path");
 
-// Storage Config
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/avatars");
-  },
+const {
+  CloudinaryStorage,
+} = require("multer-storage-cloudinary");
 
-  filename: function (req, file, cb) {
-    const uniqueName =
-      Date.now() +
-      "-" +
-      Math.round(Math.random() * 1e9) +
-      path.extname(file.originalname);
+const cloudinary =
+  require("../config/cloudinary");
 
-    cb(null, uniqueName);
-  },
-});
+const storage =
+  new CloudinaryStorage({
+    cloudinary,
 
-// File Filter
-const fileFilter = (req, file, cb) => {
-  const allowedTypes = [
-    "image/jpeg",
-    "image/jpg",
-    "image/png",
-    "image/webp",
-  ];
+    params: async (
+      req,
+      file
+    ) => ({
+      folder: "knk-avatars",
 
-  if (
-    allowedTypes.includes(file.mimetype)
-  ) {
-    cb(null, true);
-  } else {
-    cb(
-      new Error(
-        "Only JPG, JPEG, PNG and WEBP files are allowed"
-      ),
-      false
-    );
-  }
-};
+      allowed_formats: [
+        "jpg",
+        "jpeg",
+        "png",
+        "webp",
+      ],
+
+      public_id:
+        `avatar-${Date.now()}`,
+    }),
+  });
 
 const uploadAvatar = multer({
   storage,
-  fileFilter,
+
   limits: {
-    fileSize: 2 * 1024 * 1024, // 2MB
+    fileSize:
+      2 * 1024 * 1024,
   },
 });
 

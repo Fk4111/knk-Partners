@@ -206,15 +206,15 @@ const handleAvatarUpload = async (e) => {
 
             <div className="flex flex-col items-center mb-6">
 
-              <img
-               src={
-              profile.avatar
-                ? `${import.meta.env.VITE_SERVER_URL}${profile.avatar}`
-                : "https://ui-avatars.com/api/?name=User"
-            }
-                alt="Avatar"
-                className="w-28 h-28 rounded-full border-4 border-slate-200 object-cover"
-              />
+            <img
+              src={
+                profile.avatar
+                  ? profile.avatar
+                  : "https://ui-avatars.com/api/?name=User"
+              }
+              alt="Avatar"
+              className="w-28 h-28 rounded-full border-4 border-slate-200 object-cover"
+            />
 
               <label className="mt-3 cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">
                 Upload Avatar

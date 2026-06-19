@@ -20,9 +20,8 @@ function Topbar({
       ? user.email.slice(0, 2).toUpperCase()
       : "KN";
 
-      const avatarUrl = user?.avatar
-      ? `${import.meta.env.VITE_SERVER_URL}${user.avatar}`
-      : null;
+      const avatarUrl =
+       user?.avatar || null;
 
 
   return (

@@ -1,8 +1,6 @@
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const fs = require("fs");
-const path = require("path");
 
 // Generate Token
 const generateToken = (id) => {
@@ -206,49 +204,56 @@ exports.updateProfile = async (req, res) => {
 };
 
 // Upload Avatar
-exports.uploadAvatar = async (req, res) => {
+exports.uploadAvatar = async (
+  req,
+  res
+) => {
   try {
-    const user = await User.findById(req.user.id);
+
+    const user =
+      await User.findById(
+        req.user.id
+      );
 
     if (!user) {
       return res.status(404).json({
-        message: "User not found",
+        message:
+          "User not found",
       });
     }
 
     if (!req.file) {
       return res.status(400).json({
-        message: "Please upload an image",
+        message:
+          "Please upload an image",
       });
     }
-        
-     // Delete old avatar if exists
-      if (user.avatar) {
-        const oldAvatarPath = path.join(
-          __dirname,
-          "..",
-          user.avatar
-        );
 
-        if (fs.existsSync(oldAvatarPath)) {
-          fs.unlinkSync(oldAvatarPath);
-        }
-      }
-
-    user.avatar = `/uploads/avatars/${req.file.filename}`;
+    user.avatar =
+      req.file.path;
 
     await user.save();
 
     res.status(200).json({
       success: true,
-      message: "Avatar uploaded successfully",
-      avatar: user.avatar,
+      message:
+        "Avatar uploaded successfully",
+
+      avatar:
+        user.avatar,
     });
+
   } catch (error) {
-    console.log("UPLOAD AVATAR ERROR =>", error);
+
+    console.log(
+      "UPLOAD AVATAR ERROR =>",
+      error
+    );
 
     res.status(500).json({
-      message: error.message,
+      message:
+        error.message,
     });
+
   }
 };
