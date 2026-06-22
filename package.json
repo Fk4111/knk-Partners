@@ -3,6 +3,7 @@
   "private": true,
   "main": "knk-backend/server.js",
   "scripts": {
+    "postinstall": "cd knk-backend && npm install",
     "start": "node knk-backend/server.js"
   }
 }
