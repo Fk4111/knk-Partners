@@ -1,4 +1,10 @@
 {
+  "name": "knk-root",
+  "private": true,
+  "main": "knk-backend/server.js",
+  "scripts": {
+    "start": "node knk-backend/server.js"
+  },
   "dependencies": {
     "cloudinary": "^1.41.3",
     "multer-storage-cloudinary": "^4.0.0"

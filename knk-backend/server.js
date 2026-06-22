@@ -29,6 +29,7 @@ app.use(
       "http://localhost:5173",
       "https://knk-partners.vercel.app",
       "https://www.knkpartner.com",
+      "https://knkpartner.com",
       "https://knk-partners-aldhtmjqn-khanfaiyaz359-8312s-projects.vercel.app",
     ],
     methods: [

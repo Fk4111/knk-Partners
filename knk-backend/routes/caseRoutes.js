@@ -74,6 +74,15 @@ router.put(
   updateCase
 );
 
+
+// multiple Archive cases
+router.delete(
+  "/cases/bulk-delete",
+  protect,
+  adminOnly,
+  bulkDeleteCases
+);
+
 router.delete(
   "/cases/:id",
   protect,
@@ -141,13 +150,6 @@ router.patch(
   restoreCase
 );
 
-// multiple Archive cases
-router.delete(
-  "/cases/bulk-delete",
-  protect,
-  adminOnly,
-  bulkDeleteCases
-);
 
 
 // TEST ROUTE
